@@ -43,6 +43,8 @@ class SaleOrder(models.Model):
 
         product_obj = self.env["product.product"]
         lines = []
+        planned_prices = []  # (line index, price_unit) to enforce after sync
+        tour_start = tour_end = None
         stops = sorted(stops, key=lambda s: s.get("date") or "")
         for index, stop in enumerate(stops, start=1):
             template = self.env["product.template"].browse(
@@ -78,11 +80,19 @@ class SaleOrder(models.Model):
             )
             if stop.get("checkin"):
                 description += _("\nCheck-in: %s") % stop["checkin"]
+            start = start.replace(hour=12)
+            end = end.replace(hour=12)
+            tour_start = min(tour_start or start, start)
+            tour_end = max(tour_end or end, end)
+            planned_prices.append((len(lines), price_night * nights))
             lines.append(
                 (0, 0, {
                     "product_id": variant.id,
                     "product_uom_qty": horses,
                     "price_unit": price_night * nights,
+                    "is_rental": True,
+                    "start_date": start,
+                    "return_date": end,
                     "name": description,
                 })
             )
@@ -122,10 +132,22 @@ class SaleOrder(models.Model):
                 "client_order_ref": _("WEB TOUR · %s stops") % len(stops),
                 "require_signature": True,
                 "require_payment": True,
+                "is_rental_order": True,
                 "note": "\n".join(notes),
                 "order_line": lines,
             }
         )
+        # Rental syncs every line to ONE order-level period: set it to the
+        # whole tour span (real per-stop dates live in the descriptions) and
+        # re-assert the planned prices, which the date sync may recompute.
+        if tour_start and tour_end:
+            order.write({"rental_start_date": tour_start,
+                         "rental_return_date": tour_end})
+        for idx, price in planned_prices:
+            if idx < len(order.order_line):
+                line = order.order_line[idx]
+                if line.price_unit != price:
+                    line.price_unit = price
         order.activity_schedule(
             "mail.mail_activity_data_todo",
             summary=_("Validate web tour request"),

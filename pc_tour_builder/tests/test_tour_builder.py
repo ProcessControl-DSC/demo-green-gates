@@ -59,6 +59,15 @@ class TestTourBuilder(TransactionCase):
         # second stop spans 2 nights -> price_unit doubled
         self.assertEqual(order.order_line[1].price_unit, 120.0)
         self.assertIn("02/07/2026", order.order_line[0].name)
+        # visible in the Rental app, spanning the whole tour, prices intact
+        self.assertTrue(order.is_rental_order)
+        self.assertTrue(all(order.order_line.mapped("is_rental")))
+        self.assertEqual(order.rental_start_date.strftime("%Y-%m-%d"),
+                         "2026-07-02")
+        self.assertEqual(order.rental_return_date.strftime("%Y-%m-%d"),
+                         "2026-07-05")
+        self.assertEqual(order.order_line[0].price_unit, 60.0)
+        self.assertEqual(order.order_line[1].price_unit, 120.0)
 
     def test_partner_is_reused_by_email(self):
         payload = [{"template_id": self.stop_a.id, "plaza": "grass",
