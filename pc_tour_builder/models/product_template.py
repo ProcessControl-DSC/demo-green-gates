@@ -29,10 +29,13 @@ class ProductTemplate(models.Model):
                 prices["box"] = pricing.price
             else:
                 prices["grass"] = pricing.price
+        # multi-variant templates do not expose default_code at template
+        # level: fall back to the first variant's code
+        code = self.default_code or self.product_variant_ids[:1].default_code
         return {
             "id": self.id,
             "name": self.name,
-            "code": self.default_code or "",
+            "code": code or "",
             "lat": self.tour_latitude,
             "lng": self.tour_longitude,
             "capacity": self.tour_capacity,

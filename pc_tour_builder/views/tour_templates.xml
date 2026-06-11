@@ -26,7 +26,7 @@
                                     <h4>Your tour</h4>
                                     <div id="pc_tour_stops" class="mb-2"/>
                                     <div class="d-flex justify-content-between border-top pt-2">
-                                        <span class="fw-bold">Estimated total</span>
+                                        <span class="fw-bold">Estimated total (excl. taxes)</span>
                                         <span class="fw-bold" id="pc_tour_total">0,00 €</span>
                                     </div>
                                     <div id="pc_tour_form">

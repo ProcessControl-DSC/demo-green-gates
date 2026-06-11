@@ -75,7 +75,8 @@ class SaleOrder(models.Model):
                         end=end.strftime("%d/%m/%Y"),
                         horses=horses,
                         nights=nights,
-                        code=template.default_code or "",
+                        code=template.default_code
+                        or variant.default_code or "",
                     ),
                 })
             )

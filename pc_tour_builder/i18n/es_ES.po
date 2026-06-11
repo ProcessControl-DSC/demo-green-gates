@@ -77,8 +77,8 @@ msgid "Your tour"
 msgstr "Tu tour"
 
 #. module: pc_tour_builder
-msgid "Estimated total"
-msgstr "Total estimado"
+msgid "Estimated total (excl. taxes)"
+msgstr "Total estimado (sin impuestos)"
 
 #. module: pc_tour_builder
 msgid "Your details"
