@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Process Control (https://www.processcontrol.es)
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html). -->
+<odoo>
+    <template id="tour_page" name="Tour Builder">
+        <t t-call="website.layout">
+            <t t-set="pageName" t-value="'pc_tour_builder'"/>
+            <div id="wrap" class="oe_structure">
+                <section class="pt32 pb8">
+                    <div class="container">
+                        <h1>Design your tour</h1>
+                        <p class="lead">Pick the stops of your route on the map — one night per
+                        stop, choosing place type and number of horses. Send the whole tour in
+                        one request: our team validates it and you receive a single link to
+                        sign and pay the 50% down payment.</p>
+                    </div>
+                </section>
+                <section class="pb32">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div id="pc_tour_map" style="height:620px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.15)"/>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="p-3" style="background:#f4f8f5;border-radius:10px">
+                                    <h4>Your tour</h4>
+                                    <div id="pc_tour_stops" class="mb-2"/>
+                                    <div class="d-flex justify-content-between border-top pt-2">
+                                        <span class="fw-bold">Estimated total</span>
+                                        <span class="fw-bold" id="pc_tour_total">0,00 €</span>
+                                    </div>
+                                    <div id="pc_tour_form">
+                                        <h5 class="mt-3">Your details</h5>
+                                        <input id="pc_tour_name" type="text" class="form-control form-control-sm mb-1" placeholder="Name"/>
+                                        <input id="pc_tour_email" type="email" class="form-control form-control-sm mb-1" placeholder="Email"/>
+                                        <input id="pc_tour_phone" type="text" class="form-control form-control-sm mb-2" placeholder="Phone"/>
+                                        <button id="pc_tour_submit" class="btn btn-primary w-100" disabled="disabled">Request this tour</button>
+                                        <div id="pc_tour_error" class="text-danger small mt-2 d-none"/>
+                                    </div>
+                                    <div id="pc_tour_done" class="d-none mt-3 p-2" style="background:#e7f6ec;border-radius:8px">
+                                        <div class="fw-bold">Request received!</div>
+                                        <div class="small">Your tour <span id="pc_tour_order" class="fw-bold"/> is now
+                                        with our team. We will review it and send you a single link to sign and
+                                        pay the 50% down payment.</div>
+                                    </div>
+                                    <div class="small text-muted mt-3 text-center">Tour Builder · a
+                                    <a href="https://www.processcontrol.es" target="_blank">Process Control</a> solution</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <script id="pc_tour_data" type="application/json"><t t-out="stops_json"/></script>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+                <style>
+.pc-tour-pin {
+  width: 18px; height: 18px;
+  border-radius: 50% 50% 50% 0;
+  background: #1f5430;
+  border: 2px solid #fff;
+  transform: rotate(-45deg);
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+.pc-tour-row {
+  background: #fff;
+  border: 1px solid #dde7df;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 6px;
+}
+                </style>
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"/>
+                <script>
+window.addEventListener('load', function () {
+  var stops = JSON.parse(document.getElementById('pc_tour_data').textContent);
+  var byId = {};
+  stops.forEach(function (s) { byId[s.id] = s; });
+  var tour = [];
+  function euro(v) { return v.toFixed(2).replace('.', ',') + ' €'; }
+  function mk(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) { e.className = cls; }
+    if (text) { e.textContent = text; }
+    return e;
+  }
+
+  var map = L.map('pc_tour_map', {scrollWheelZoom: false});
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18, attribution: 'OpenStreetMap'
+  }).addTo(map);
+  var icon = L.divIcon({className: 'pc-tour-pin', iconSize: [18, 18],
+                        iconAnchor: [9, 18], popupAnchor: [0, -16]});
+  var bounds = [];
+  stops.forEach(function (s) {
+    var box = mk('div');
+    box.style.width = '200px';
+    var img = document.createElement('img');
+    img.src = s.img;
+    img.style.cssText = 'width:100%;height:100px;object-fit:cover;border-radius:6px';
+    box.appendChild(img);
+    box.appendChild(mk('div', 'fw-bold mt-1', s.name));
+    var sub = s.code;
+    if (s.capacity) { sub = sub + ' · ' + s.capacity + ' cuadras'; }
+    box.appendChild(mk('div', 'small text-muted', sub));
+    box.appendChild(mk('div', 'small', 'Hierba ' + euro(s.prices.grass) +
+                       ' · Box ' + euro(s.prices.box) + ' / noche'));
+    var btn = mk('button', 'btn btn-primary btn-sm mt-2 w-100', 'Añadir parada');
+    btn.addEventListener('click', function () { addStop(s.id); });
+    box.appendChild(btn);
+    L.marker([s.lat, s.lng], {icon: icon}).addTo(map).bindPopup(box);
+    bounds.push([s.lat, s.lng]);
+  });
+  if (bounds.length) { map.fitBounds(bounds, {padding: [30, 30]}); }
+
+  var listEl = document.getElementById('pc_tour_stops');
+  function defaultDate(n) {
+    var d = new Date(Date.now() + (n + 1) * 86400000);
+    return d.toISOString().slice(0, 10);
+  }
+  function addStop(tplId) {
+    tour.push({tplId: tplId, plaza: 'box', date: defaultDate(tour.length),
+               nights: 1, horses: 2});
+    render();
+    map.closePopup();
+  }
+  function render() {
+    listEl.textContent = '';
+    var total = 0;
+    tour.forEach(function (st, i) {
+      var s = byId[st.tplId];
+      var row = mk('div', 'pc-tour-row');
+      var head = mk('div', 'd-flex justify-content-between align-items-center');
+      head.appendChild(mk('div', 'fw-bold small', (i + 1) + '. ' + s.name));
+      var del = mk('a', 'text-danger fw-bold text-decoration-none', '✕');
+      del.href = '#';
+      del.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        tour.splice(i, 1);
+        render();
+      });
+      head.appendChild(del);
+      row.appendChild(head);
+      var grid = mk('div', 'd-flex gap-1 mt-1');
+      var date = document.createElement('input');
+      date.type = 'date';
+      date.value = st.date;
+      date.className = 'form-control form-control-sm';
+      date.addEventListener('change', function () { st.date = date.value; });
+      grid.appendChild(date);
+      var plaza = document.createElement('select');
+      plaza.className = 'form-select form-select-sm';
+      [['box', 'Box'], ['grass', 'Hierba']].forEach(function (o) {
+        var op = document.createElement('option');
+        op.value = o[0];
+        op.textContent = o[1];
+        if (st.plaza === o[0]) { op.selected = true; }
+        plaza.appendChild(op);
+      });
+      plaza.addEventListener('change', function () { st.plaza = plaza.value; render(); });
+      grid.appendChild(plaza);
+      row.appendChild(grid);
+      var grid2 = mk('div', 'd-flex gap-1 mt-1 align-items-center');
+      var nights = document.createElement('select');
+      nights.className = 'form-select form-select-sm';
+      [1, 2, 3, 4, 5, 6, 7].forEach(function (n) {
+        var op = document.createElement('option');
+        op.value = n;
+        op.textContent = n + ' noche' + (n > 1 ? 's' : '');
+        if (st.nights === n) { op.selected = true; }
+        nights.appendChild(op);
+      });
+      nights.addEventListener('change', function () {
+        st.nights = parseInt(nights.value, 10);
+        render();
+      });
+      grid2.appendChild(nights);
+      var horses = document.createElement('input');
+      horses.type = 'number';
+      horses.min = 1;
+      horses.max = 40;
+      horses.value = st.horses;
+      horses.title = 'Caballos';
+      horses.className = 'form-control form-control-sm';
+      horses.addEventListener('change', function () {
+        st.horses = Math.max(1, parseInt(horses.value, 10) || 1);
+        render();
+      });
+      grid2.appendChild(horses);
+      grid2.appendChild(mk('span', 'small text-muted', 'cab.'));
+      row.appendChild(grid2);
+      var price = st.horses * st.nights *
+                  (st.plaza === 'box' ? s.prices.box : s.prices.grass);
+      total = total + price;
+      row.appendChild(mk('div', 'text-end small fw-bold mt-1', euro(price)));
+      listEl.appendChild(row);
+    });
+    document.getElementById('pc_tour_total').textContent = euro(total);
+    document.getElementById('pc_tour_submit').disabled = (tour.length === 0);
+  }
+  render();
+
+  function val(id) { return document.getElementById(id).value; }
+  document.getElementById('pc_tour_submit').addEventListener('click', function () {
+    var err = document.getElementById('pc_tour_error');
+    err.classList.add('d-none');
+    var payload = {
+      customer: {name: val('pc_tour_name'), email: val('pc_tour_email'),
+                 phone: val('pc_tour_phone')},
+      stops: tour.map(function (st) {
+        return {template_id: st.tplId, plaza: st.plaza, date: st.date,
+                nights: st.nights, horses: st.horses};
+      })
+    };
+    fetch('/tour/submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).then(function (r) {
+      return r.json().then(function (data) { return {ok: r.ok, data: data}; });
+    }).then(function (res) {
+      if (res.ok) {
+        document.getElementById('pc_tour_order').textContent = res.data.name;
+        document.getElementById('pc_tour_done').classList.remove('d-none');
+        document.getElementById('pc_tour_form').classList.add('d-none');
+      } else {
+        err.textContent = res.data.error || 'Error';
+        err.classList.remove('d-none');
+      }
+    }).catch(function () {
+      err.textContent = 'Error de red';
+      err.classList.remove('d-none');
+    });
+  });
+});
+                </script>
+            </div>
+        </t>
+    </template>
+</odoo>

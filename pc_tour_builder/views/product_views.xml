@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Process Control (https://www.processcontrol.es)
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html). -->
+<odoo>
+    <record id="product_template_form_view_tour" model="ir.ui.view">
+        <field name="name">product.template.form.tour.stop</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <group name="group_general" position="inside">
+                <field name="is_tour_stop"/>
+                <field name="tour_latitude" invisible="not is_tour_stop"/>
+                <field name="tour_longitude" invisible="not is_tour_stop"/>
+                <field name="tour_capacity" invisible="not is_tour_stop"/>
+            </group>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,150 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* pc_tour_builder
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: Process Control\n"
+"Language-Team: Process Control\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: pc_tour_builder
+msgid "A tour needs at least one stop."
+msgstr "Un tour necesita al menos una parada."
+
+#. module: pc_tour_builder
+msgid "Name and email are required."
+msgstr "El nombre y el correo electrónico son obligatorios."
+
+#. module: pc_tour_builder
+msgid "Stop %s is not available."
+msgstr "La parada %s no está disponible."
+
+#. module: pc_tour_builder
+msgid "Stop %s has an invalid date."
+msgstr "La parada %s tiene una fecha no válida."
+
+#. module: pc_tour_builder
+msgid ""
+"%(product)s\n"
+"Stop %(index)s · %(start)s 12:00 → %(end)s 12:00 · %(horses)s horses × "
+"%(nights)s night(s) · %(code)s"
+msgstr ""
+"%(product)s\n"
+"Parada %(index)s · %(start)s 12:00 → %(end)s 12:00 · %(horses)s caballos × "
+"%(nights)s noche(s) · %(code)s"
+
+#. module: pc_tour_builder
+msgid "WEB TOUR · %s stops"
+msgstr "TOUR WEB · %s paradas"
+
+#. module: pc_tour_builder
+msgid "Validate web tour request"
+msgstr "Validar solicitud de tour web"
+
+#. module: pc_tour_builder
+msgid ""
+"Tour requested from the website by %s. Review the stops, adjust if needed "
+"and send the quotation for signature and down payment."
+msgstr ""
+"Tour solicitado desde la web por %s. Revisa las paradas, ajústalas si hace "
+"falta y envía el presupuesto para firma y señal."
+
+#. module: pc_tour_builder
+msgid "Design your tour"
+msgstr "Diseña tu tour"
+
+#. module: pc_tour_builder
+msgid ""
+"Pick the stops of your route on the map — one night per\n"
+"                        stop, choosing place type and number of horses. Send the whole tour in\n"
+"                        one request: our team validates it and you receive a single link to\n"
+"                        sign and pay the 50% down payment."
+msgstr ""
+"Elige las paradas de tu ruta en el mapa — una noche por parada, con su tipo "
+"de plaza y número de caballos. Envía el tour completo en una sola solicitud: "
+"nuestro equipo lo valida y recibirás un único enlace para firmar y pagar la "
+"señal del 50 %."
+
+#. module: pc_tour_builder
+msgid "Your tour"
+msgstr "Tu tour"
+
+#. module: pc_tour_builder
+msgid "Estimated total"
+msgstr "Total estimado"
+
+#. module: pc_tour_builder
+msgid "Your details"
+msgstr "Tus datos"
+
+#. module: pc_tour_builder
+msgid "Name"
+msgstr "Nombre"
+
+#. module: pc_tour_builder
+msgid "Email"
+msgstr "Correo electrónico"
+
+#. module: pc_tour_builder
+msgid "Phone"
+msgstr "Teléfono"
+
+#. module: pc_tour_builder
+msgid "Request this tour"
+msgstr "Solicitar este tour"
+
+#. module: pc_tour_builder
+msgid "Request received!"
+msgstr "¡Solicitud recibida!"
+
+#. module: pc_tour_builder
+msgid ""
+"is now\n"
+"                                        with our team. We will review it and send you a single link to sign and\n"
+"                                        pay the 50% down payment."
+msgstr ""
+"ya está con nuestro equipo. Lo revisaremos y te enviaremos un único enlace "
+"para firmar y pagar la señal del 50 %."
+
+#. module: pc_tour_builder
+msgid "Tour Builder · a"
+msgstr "Tour Builder · una solución de"
+
+#. module: pc_tour_builder
+msgid "Process Control"
+msgstr "Process Control"
+
+#. module: pc_tour_builder
+msgid "solution"
+msgstr ""
+
+#. module: pc_tour_builder
+msgid "Tour Stop"
+msgstr "Parada de tour"
+
+#. module: pc_tour_builder
+msgid "Published on the tour builder landing as a bookable stop."
+msgstr "Se publica en la landing del tour como parada reservable."
+
+#. module: pc_tour_builder
+msgid "Latitude"
+msgstr "Latitud"
+
+#. module: pc_tour_builder
+msgid "Longitude"
+msgstr "Longitud"
+
+#. module: pc_tour_builder
+msgid "Stop Capacity"
+msgstr "Capacidad de la parada"
+
+#. module: pc_tour_builder
+msgid "Number of stalls available at this stop (informative)."
+msgstr "Número de cuadras disponibles en esta parada (informativo)."
