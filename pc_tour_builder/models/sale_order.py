@@ -13,9 +13,12 @@ class SaleOrder(models.Model):
     def pc_create_tour_order(self, customer, stops):
         """Create a draft quotation from a tour builder request.
 
-        :param dict customer: {'name', 'email', 'phone'}
+        :param dict customer: {'name', 'email', 'phone', 'rider',
+                               'stallion', 'payment_pref'}
         :param list stops: [{'template_id', 'plaza' ('box'|'grass'),
-                             'date' 'YYYY-MM-DD', 'nights', 'horses'}]
+                             'date' 'YYYY-MM-DD', 'nights', 'horses',
+                             'checkin' (free label),
+                             'extras': [{'code', 'qty'}]}]
         :return dict: {'id', 'name', 'amount_total'}
         """
         if not stops:
@@ -38,6 +41,7 @@ class SaleOrder(models.Model):
                 }
             )
 
+        product_obj = self.env["product.product"]
         lines = []
         stops = sorted(stops, key=lambda s: s.get("date") or "")
         for index, stop in enumerate(stops, start=1):
@@ -60,27 +64,57 @@ class SaleOrder(models.Model):
             except (TypeError, ValueError):
                 raise UserError(_("Stop %s has an invalid date.") % index)
             end = start + timedelta(days=nights)
+            description = _(
+                "%(product)s\nStop %(index)s · %(start)s → %(end)s · "
+                "%(horses)s horses × %(nights)s night(s) · %(code)s",
+                product=variant.display_name,
+                index=index,
+                start=start.strftime("%d/%m/%Y"),
+                end=end.strftime("%d/%m/%Y"),
+                horses=horses,
+                nights=nights,
+                code=template.default_code
+                or variant.default_code or "",
+            )
+            if stop.get("checkin"):
+                description += _("\nCheck-in: %s") % stop["checkin"]
             lines.append(
                 (0, 0, {
                     "product_id": variant.id,
                     "product_uom_qty": horses,
                     "price_unit": price_night * nights,
-                    "name": _(
-                        "%(product)s\nStop %(index)s · %(start)s 12:00 → "
-                        "%(end)s 12:00 · %(horses)s horses × %(nights)s "
-                        "night(s) · %(code)s",
-                        product=variant.display_name,
-                        index=index,
-                        start=start.strftime("%d/%m/%Y"),
-                        end=end.strftime("%d/%m/%Y"),
-                        horses=horses,
-                        nights=nights,
-                        code=template.default_code
-                        or variant.default_code or "",
-                    ),
+                    "name": description,
                 })
             )
+            # per-stop extra services, resolved by internal reference
+            for extra in stop.get("extras") or []:
+                code = (extra.get("code") or "").strip()
+                qty = max(1, int(extra.get("qty") or 1))
+                product = product_obj.search(
+                    [("default_code", "=", code), ("type", "=", "service")],
+                    limit=1,
+                )
+                if not product:
+                    continue
+                lines.append(
+                    (0, 0, {
+                        "product_id": product.id,
+                        "product_uom_qty": qty,
+                        "name": _("Stop %(index)s · %(product)s",
+                                  index=index,
+                                  product=product.display_name),
+                    })
+                )
 
+        notes = []
+        if customer.get("rider"):
+            notes.append(_("Rider / Driver / Groom: %s") % customer["rider"])
+        if customer.get("stallion"):
+            notes.append(_("Stallion in the group: %s") % customer["stallion"])
+        if customer.get("payment_pref"):
+            notes.append(
+                _("Preferred payment method: %s") % customer["payment_pref"]
+            )
         order = self.create(
             {
                 "partner_id": partner.id,
@@ -88,6 +122,7 @@ class SaleOrder(models.Model):
                 "client_order_ref": _("WEB TOUR · %s stops") % len(stops),
                 "require_signature": True,
                 "require_payment": True,
+                "note": "\n".join(notes),
                 "order_line": lines,
             }
         )

@@ -21,9 +21,32 @@ class TourBuilderController(http.Controller):
             ]
         )
         stops = [t.pc_tour_stop_data() for t in templates]
+        extra_codes = (
+            request.env["ir.config_parameter"].sudo().get_param(
+                "pc_tour_builder.extra_codes",
+                "SRV-ELEC,SRV-AL1,SRV-AL2,SRV-AL3,SRV-BOXSP,SRV-VET,"
+                "SRV-HERR,SRV-WALK,SRV-PISTA,SRV-HENO,SRV-VIRUTA",
+            )
+        ).split(",")
+        extras = [
+            {
+                "code": p.default_code,
+                "name": p.name,
+                "price": p.list_price,
+            }
+            for p in request.env["product.product"].sudo().search(
+                [("default_code", "in", [c.strip() for c in extra_codes]),
+                 ("type", "=", "service")]
+            )
+        ]
+        extras.sort(key=lambda e: extra_codes.index(e["code"])
+                    if e["code"] in extra_codes else 99)
         return request.render(
             "pc_tour_builder.tour_page",
-            {"stops_json": Markup(json.dumps(stops, ensure_ascii=False))},
+            {
+                "stops_json": Markup(json.dumps(stops, ensure_ascii=False)),
+                "extras_json": Markup(json.dumps(extras, ensure_ascii=False)),
+            },
         )
 
     @http.route(

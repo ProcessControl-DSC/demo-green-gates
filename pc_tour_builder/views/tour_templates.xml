@@ -19,10 +19,10 @@
                     <div class="container">
                         <div class="row">
                             <div class="col-lg-8">
-                                <div id="pc_tour_map" style="height:620px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.15)"/>
+                                <div id="pc_tour_map" style="height:660px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.15)"/>
                             </div>
                             <div class="col-lg-4">
-                                <div class="p-3" style="background:#f4f8f5;border-radius:10px">
+                                <div class="p-3" style="background:#f4f8f5;border-radius:10px;max-height:660px;overflow-y:auto">
                                     <h4>Your tour</h4>
                                     <div id="pc_tour_stops" class="mb-2"/>
                                     <div class="d-flex justify-content-between border-top pt-2">
@@ -31,9 +31,19 @@
                                     </div>
                                     <div id="pc_tour_form">
                                         <h5 class="mt-3">Your details</h5>
-                                        <input id="pc_tour_name" type="text" class="form-control form-control-sm mb-1" placeholder="Name"/>
+                                        <input id="pc_tour_name" type="text" class="form-control form-control-sm mb-1" placeholder="Name / Company"/>
+                                        <input id="pc_tour_rider" type="text" class="form-control form-control-sm mb-1" placeholder="Rider / Driver / Groom"/>
                                         <input id="pc_tour_email" type="email" class="form-control form-control-sm mb-1" placeholder="Email"/>
-                                        <input id="pc_tour_phone" type="text" class="form-control form-control-sm mb-2" placeholder="Phone"/>
+                                        <input id="pc_tour_phone" type="text" class="form-control form-control-sm mb-1" placeholder="Mobile"/>
+                                        <select id="pc_tour_stallion" class="form-select form-select-sm mb-1">
+                                            <option value="No">Any stallion? — No</option>
+                                            <option value="Sí">Any stallion? — Yes</option>
+                                        </select>
+                                        <select id="pc_tour_payment" class="form-select form-select-sm mb-2">
+                                            <option value="Tarjeta">Payment: Card</option>
+                                            <option value="Efectivo">Payment: Cash</option>
+                                            <option value="Transferencia">Payment: Wire transfer</option>
+                                        </select>
                                         <button id="pc_tour_submit" class="btn btn-primary w-100" disabled="disabled">Request this tour</button>
                                         <div id="pc_tour_error" class="text-danger small mt-2 d-none"/>
                                     </div>
@@ -51,6 +61,7 @@
                     </div>
                 </section>
                 <script id="pc_tour_data" type="application/json"><t t-out="stops_json"/></script>
+                <script id="pc_tour_extras" type="application/json"><t t-out="extras_json"/></script>
                 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
                 <style>
 .pc-tour-pin {
@@ -61,6 +72,17 @@
   transform: rotate(-45deg);
   box-shadow: 0 1px 4px rgba(0,0,0,.4);
 }
+.pc-tour-pin-num {
+  background: #b45309;
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 22px;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 1px 5px rgba(0,0,0,.5);
+}
 .pc-tour-row {
   background: #fff;
   border: 1px solid #dde7df;
@@ -68,13 +90,25 @@
   padding: 8px;
   margin-bottom: 6px;
 }
+.pc-tour-row details summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: #1f5430;
+  font-weight: 600;
+}
+.pc-tour-row .form-check-label { font-size: 12px; }
                 </style>
                 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"/>
                 <script>
 window.addEventListener('load', function () {
   var stops = JSON.parse(document.getElementById('pc_tour_data').textContent);
+  var extras = JSON.parse(document.getElementById('pc_tour_extras').textContent);
   var byId = {};
   stops.forEach(function (s) { byId[s.id] = s; });
+  var extraBy = {};
+  extras.forEach(function (e) { extraBy[e.code] = e; });
+  var HIDDEN = {'SRV-HENO': 1, 'SRV-VIRUTA': 1};
+  var PER_NIGHT = {'SRV-ELEC': 1, 'SRV-AL1': 1, 'SRV-AL2': 1, 'SRV-AL3': 1};
   var tour = [];
   function euro(v) { return v.toFixed(2).replace('.', ',') + ' €'; }
   function mk(tag, cls, text) {
@@ -83,6 +117,11 @@ window.addEventListener('load', function () {
     if (text) { e.textContent = text; }
     return e;
   }
+  function sortedTour() {
+    return tour.slice().sort(function (a, b) {
+      return (a.date > b.date) ? 1 : ((b.date > a.date) ? -1 : 0);
+    });
+  }
 
   var map = L.map('pc_tour_map', {scrollWheelZoom: false});
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -90,6 +129,7 @@ window.addEventListener('load', function () {
   }).addTo(map);
   var icon = L.divIcon({className: 'pc-tour-pin', iconSize: [18, 18],
                         iconAnchor: [9, 18], popupAnchor: [0, -16]});
+  var routeLayer = L.layerGroup().addTo(map);
   var bounds = [];
   stops.forEach(function (s) {
     var box = mk('div');
@@ -112,6 +152,24 @@ window.addEventListener('load', function () {
   });
   if (bounds.length) { map.fitBounds(bounds, {padding: [30, 30]}); }
 
+  function renderMap() {
+    routeLayer.clearLayers();
+    var pts = [];
+    sortedTour().forEach(function (st, i) {
+      var s = byId[st.tplId];
+      var badge = L.divIcon({className: 'pc-tour-pin-num',
+                             html: String(i + 1),
+                             iconSize: [26, 26], iconAnchor: [13, 13]});
+      L.marker([s.lat, s.lng], {icon: badge, zIndexOffset: 1000})
+        .addTo(routeLayer);
+      pts.push([s.lat, s.lng]);
+    });
+    if (pts.length > 1) {
+      L.polyline(pts, {color: '#1f5430', weight: 3, dashArray: '8 6',
+                       opacity: 0.85}).addTo(routeLayer);
+    }
+  }
+
   var listEl = document.getElementById('pc_tour_stops');
   function defaultDate(n) {
     var d = new Date(Date.now() + (n + 1) * 86400000);
@@ -119,9 +177,47 @@ window.addEventListener('load', function () {
   }
   function addStop(tplId) {
     tour.push({tplId: tplId, plaza: 'box', date: defaultDate(tour.length),
-               nights: 1, horses: 2});
+               nights: 1, horses: 2, checkin: 'Tarde', bedding: 'straw',
+               hay: false, sel: {}});
     render();
     map.closePopup();
+  }
+  function stopExtras(st) {
+    var out = [];
+    Object.keys(st.sel).forEach(function (code) {
+      if (st.sel[code]) {
+        var qty = PER_NIGHT[code] ? st.nights : 1;
+        out.push({code: code, qty: qty});
+      }
+    });
+    if (st.hay) { out.push({code: 'SRV-HENO', qty: st.horses * st.nights}); }
+    if (st.bedding === 'shavings') {
+      out.push({code: 'SRV-VIRUTA', qty: st.horses * st.nights});
+    }
+    return out;
+  }
+  function stopPrice(st) {
+    var s = byId[st.tplId];
+    var total = st.horses * st.nights *
+                (st.plaza === 'box' ? s.prices.box : s.prices.grass);
+    stopExtras(st).forEach(function (x) {
+      var e = extraBy[x.code];
+      if (e) { total = total + x.qty * e.price; }
+    });
+    return total;
+  }
+  function sel(options, value, onChange) {
+    var el = document.createElement('select');
+    el.className = 'form-select form-select-sm';
+    options.forEach(function (o) {
+      var op = document.createElement('option');
+      op.value = o[0];
+      op.textContent = o[1];
+      if (value === o[0]) { op.selected = true; }
+      el.appendChild(op);
+    });
+    el.addEventListener('change', function () { onChange(el.value); render(); });
+    return el;
   }
   function render() {
     listEl.textContent = '';
@@ -140,40 +236,29 @@ window.addEventListener('load', function () {
       });
       head.appendChild(del);
       row.appendChild(head);
-      var grid = mk('div', 'd-flex gap-1 mt-1');
+
+      var g1 = mk('div', 'd-flex gap-1 mt-1');
       var date = document.createElement('input');
       date.type = 'date';
       date.value = st.date;
+      date.title = 'Llegada';
       date.className = 'form-control form-control-sm';
-      date.addEventListener('change', function () { st.date = date.value; });
-      grid.appendChild(date);
-      var plaza = document.createElement('select');
-      plaza.className = 'form-select form-select-sm';
-      [['box', 'Box'], ['grass', 'Hierba']].forEach(function (o) {
-        var op = document.createElement('option');
-        op.value = o[0];
-        op.textContent = o[1];
-        if (st.plaza === o[0]) { op.selected = true; }
-        plaza.appendChild(op);
-      });
-      plaza.addEventListener('change', function () { st.plaza = plaza.value; render(); });
-      grid.appendChild(plaza);
-      row.appendChild(grid);
-      var grid2 = mk('div', 'd-flex gap-1 mt-1 align-items-center');
-      var nights = document.createElement('select');
-      nights.className = 'form-select form-select-sm';
-      [1, 2, 3, 4, 5, 6, 7].forEach(function (n) {
-        var op = document.createElement('option');
-        op.value = n;
-        op.textContent = n + ' noche' + (n > 1 ? 's' : '');
-        if (st.nights === n) { op.selected = true; }
-        nights.appendChild(op);
-      });
-      nights.addEventListener('change', function () {
-        st.nights = parseInt(nights.value, 10);
-        render();
-      });
-      grid2.appendChild(nights);
+      date.addEventListener('change', function () { st.date = date.value; render(); });
+      g1.appendChild(date);
+      g1.appendChild(sel([['Mañana', 'Check-in: mañana'],
+                          ['Tarde', 'Check-in: tarde'],
+                          ['Noche', 'Check-in: noche']],
+                         st.checkin, function (v) { st.checkin = v; }));
+      row.appendChild(g1);
+
+      var g2 = mk('div', 'd-flex gap-1 mt-1 align-items-center');
+      g2.appendChild(sel([[1, '1 noche'], [2, '2 noches'], [3, '3 noches'],
+                          [4, '4 noches'], [5, '5 noches'], [6, '6 noches'],
+                          [7, '7 noches']].map(function (o) {
+                            return [String(o[0]), o[1]];
+                          }),
+                         String(st.nights),
+                         function (v) { st.nights = parseInt(v, 10); }));
       var horses = document.createElement('input');
       horses.type = 'number';
       horses.min = 1;
@@ -185,17 +270,64 @@ window.addEventListener('load', function () {
         st.horses = Math.max(1, parseInt(horses.value, 10) || 1);
         render();
       });
-      grid2.appendChild(horses);
-      grid2.appendChild(mk('span', 'small text-muted', 'cab.'));
-      row.appendChild(grid2);
-      var price = st.horses * st.nights *
-                  (st.plaza === 'box' ? s.prices.box : s.prices.grass);
+      g2.appendChild(horses);
+      g2.appendChild(mk('span', 'small text-muted', 'cab.'));
+      row.appendChild(g2);
+
+      var g3 = mk('div', 'd-flex gap-1 mt-1');
+      g3.appendChild(sel([['box', 'Box'], ['grass', 'Paddock hierba']],
+                         st.plaza, function (v) { st.plaza = v; }));
+      g3.appendChild(sel([['straw', 'Cama: paja'],
+                          ['shavings', 'Cama: viruta']],
+                         st.bedding, function (v) { st.bedding = v; }));
+      row.appendChild(g3);
+
+      var hayDiv = mk('div', 'form-check mt-1');
+      var hay = document.createElement('input');
+      hay.type = 'checkbox';
+      hay.className = 'form-check-input';
+      hay.checked = st.hay;
+      hay.id = 'pc_hay_' + i;
+      hay.addEventListener('change', function () { st.hay = hay.checked; render(); });
+      var hayLb = mk('label', 'form-check-label', 'Heno');
+      hayLb.htmlFor = 'pc_hay_' + i;
+      hayDiv.appendChild(hay);
+      hayDiv.appendChild(hayLb);
+      row.appendChild(hayDiv);
+
+      var det = document.createElement('details');
+      var sum = document.createElement('summary');
+      sum.textContent = 'Servicios extra';
+      det.appendChild(sum);
+      extras.forEach(function (e) {
+        if (HIDDEN[e.code]) { return; }
+        var d = mk('div', 'form-check');
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'form-check-input';
+        cb.checked = !!st.sel[e.code];
+        cb.id = 'pc_x_' + i + '_' + e.code;
+        cb.addEventListener('change', function () {
+          st.sel[e.code] = cb.checked;
+          render();
+        });
+        var lb = mk('label', 'form-check-label',
+                    e.name + ' (' + euro(e.price) + ')');
+        lb.htmlFor = cb.id;
+        d.appendChild(cb);
+        d.appendChild(lb);
+        det.appendChild(d);
+      });
+      row.appendChild(det);
+
+      var price = stopPrice(st);
       total = total + price;
       row.appendChild(mk('div', 'text-end small fw-bold mt-1', euro(price)));
       listEl.appendChild(row);
     });
     document.getElementById('pc_tour_total').textContent = euro(total);
     document.getElementById('pc_tour_submit').disabled = (tour.length === 0);
+    renderMap();
   }
   render();
 
@@ -205,10 +337,13 @@ window.addEventListener('load', function () {
     err.classList.add('d-none');
     var payload = {
       customer: {name: val('pc_tour_name'), email: val('pc_tour_email'),
-                 phone: val('pc_tour_phone')},
-      stops: tour.map(function (st) {
+                 phone: val('pc_tour_phone'), rider: val('pc_tour_rider'),
+                 stallion: val('pc_tour_stallion'),
+                 payment_pref: val('pc_tour_payment')},
+      stops: sortedTour().map(function (st) {
         return {template_id: st.tplId, plaza: st.plaza, date: st.date,
-                nights: st.nights, horses: st.horses};
+                nights: st.nights, horses: st.horses, checkin: st.checkin,
+                extras: stopExtras(st)};
       })
     };
     fetch('/tour/submit', {

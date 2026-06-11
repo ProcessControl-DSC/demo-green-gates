@@ -71,6 +71,32 @@ class TestTourBuilder(TransactionCase):
         o2 = self.env["sale.order"].browse(res2["id"])
         self.assertEqual(o1.partner_id, o2.partner_id)
 
+    def test_stop_with_checkin_and_extras(self):
+        extra = self.env["product.product"].create(
+            {
+                "name": "Test Electricity",
+                "default_code": "SRV-TEST",
+                "type": "service",
+                "list_price": 5.0,
+            }
+        )
+        result = self.env["sale.order"].pc_create_tour_order(
+            {"name": "Extra Rider", "email": "extra@example.test",
+             "rider": "John Groom", "stallion": "Sí",
+             "payment_pref": "Tarjeta"},
+            [{"template_id": self.stop_a.id, "plaza": "box",
+              "date": "2026-07-05", "nights": 2, "horses": 3,
+              "checkin": "Tarde",
+              "extras": [{"code": "SRV-TEST", "qty": 2}]}],
+        )
+        order = self.env["sale.order"].browse(result["id"])
+        self.assertEqual(len(order.order_line), 2)
+        self.assertIn("Check-in: Tarde", order.order_line[0].name)
+        self.assertEqual(order.order_line[1].product_id, extra)
+        self.assertEqual(order.order_line[1].product_uom_qty, 2)
+        self.assertIn("Stop 1", order.order_line[1].name)
+        self.assertIn("John Groom", order.note or "")
+
     def test_empty_tour_raises(self):
         with self.assertRaises(UserError):
             self.env["sale.order"].pc_create_tour_order(
