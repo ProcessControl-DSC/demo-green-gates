@@ -380,29 +380,22 @@ window.addEventListener('load', function () {
     document.getElementById('pc_tour_route_msg').textContent = text || '';
   }
 
-  // Photon (OpenStreetMap) geocoder: free, no key, autocomplete-friendly.
-  function photonUrl(query, limit) {
-    // Photon only supports lang default/de/en/fr; 'default' returns the
-    // local place name (Madrid, Sevilla, París...).
-    return 'https://photon.komoot.io/api/?lang=default&amp;limit=' + limit
+  // Nominatim (OpenStreetMap) geocoder with accept-language=es: it
+  // understands Spanish exonyms (Brujas, Núremberg, Burdeos, Amberes...)
+  // that Photon's local-name search misses. Demo use; for production
+  // volume self-host Nominatim or use a paid geocoder.
+  function geoUrl(query, limit) {
+    return 'https://nominatim.openstreetmap.org/search?format=jsonv2'
+           + '&amp;accept-language=es&amp;limit=' + limit
            + '&amp;q=' + encodeURIComponent(query);
   }
-  function featureLabel(f) {
-    var p = f.properties || {};
-    var parts = [p.name];
-    if (p.state) { parts.push(p.state); }
-    if (p.country) { parts.push(p.country); }
-    return parts.filter(Boolean).join(', ');
-  }
   function geocode(query) {
-    return fetch(photonUrl(query, 1))
+    return fetch(geoUrl(query, 1), {headers: {'Accept': 'application/json'}})
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        var feats = (data || {}).features || [];
-        if (feats.length === 0) { return null; }
-        var c = (feats[0].geometry || {}).coordinates || null;
-        if (c === null) { return null; }
-        return [c[1], c[0]];
+        var rows = data || [];
+        if (rows.length === 0) { return null; }
+        return [parseFloat(rows[0].lat), parseFloat(rows[0].lon)];
       })
       .catch(function () { return null; });
   }
@@ -418,27 +411,27 @@ window.addEventListener('load', function () {
       if (timer) { window.clearTimeout(timer); }
       if (query.length >= 3) {
         timer = window.setTimeout(function () {
-          fetch(photonUrl(query, 6)).then(function (r) { return r.json(); })
+          fetch(geoUrl(query, 6), {headers: {'Accept': 'application/json'}})
+            .then(function (r) { return r.json(); })
             .then(function (data) {
               boxEl.textContent = '';
-              var feats = (data || {}).features || [];
-              if (feats.length === 0) { close(); return; }
-              feats.forEach(function (f) {
-                var c = (f.geometry || {}).coordinates || null;
-                if (c === null) { return; }
-                var label = featureLabel(f);
+              var rows = data || [];
+              if (rows.length === 0) { close(); return; }
+              rows.forEach(function (f) {
+                var label = f.display_name || '';
+                if (label === '') { return; }
                 var item = mk('div', 'pc-ac-item', label);
                 item.addEventListener('mousedown', function (ev) {
                   ev.preventDefault();
                   input.value = label;
-                  assign([c[1], c[0]]);
+                  assign([parseFloat(f.lat), parseFloat(f.lon)]);
                   close();
                 });
                 boxEl.appendChild(item);
               });
               boxEl.style.display = 'block';
             }).catch(function () { close(); });
-        }, 300);
+        }, 600);
       } else {
         close();
       }
