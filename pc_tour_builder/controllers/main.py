@@ -141,13 +141,17 @@ class TourBuilderController(http.Controller):
         destination = payload.get("destination")
         transport = self._transport(payload.get("transport_config_id"))
         router = request.env["pc.tour.router"].sudo()
-        suggestions = router.suggest_stops(origin, destination, transport)
+        suggestion = router.suggest_stops(origin, destination, transport)
+        suggestions = suggestion["stops"]
         # Also return the full route so the client can draw the road
         # polyline in one round-trip.
         waypoints = [origin]
         waypoints += [[s["lat"], s["lng"]] for s in suggestions]
         waypoints.append(destination)
         route = router.compute_route(waypoints, transport)
-        return request.make_json_response(
-            {"suggestions": suggestions, "route": route}
-        )
+        return request.make_json_response({
+            "suggestions": suggestions,
+            "route": route,
+            "required_stops": suggestion["required_stops"],
+            "network_insufficient": suggestion["network_insufficient"],
+        })

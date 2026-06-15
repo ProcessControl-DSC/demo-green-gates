@@ -182,7 +182,7 @@ class TestTourRouter(TransactionCase):
         cls.mid = cls.env["product.template"].create({
             "name": "Router Mid", "default_code": "RT-MID",
             "type": "service", "is_published": True, "is_tour_stop": True,
-            "tour_latitude": 42.0, "tour_longitude": 0.0,
+            "tour_latitude": 42.0, "tour_longitude": 0.001,
         })
         # an unpublished stop must never be suggested
         cls.hidden = cls.env["product.template"].create({
@@ -212,18 +212,79 @@ class TestTourRouter(TransactionCase):
         self.assertEqual(result["distance_km"], 0.0)
 
     def test_suggest_picks_intermediate_stop(self):
-        suggestions = self.router.suggest_stops(
+        result = self.router.suggest_stops(
             self.origin, self.destination, self.transport
         )
-        codes = [s["code"] for s in suggestions]
+        codes = [s["code"] for s in result["stops"]]
         # the published midpoint stop is suggested at the leg cut
         self.assertIn("RT-MID", codes)
         # the unpublished stop is never suggested
         self.assertNotIn("RT-HID", codes)
+        self.assertFalse(result["network_insufficient"])
 
     def test_suggest_short_route_returns_empty(self):
         # a 400 km leg over a ~15 km route never needs an intermediate stop
-        suggestions = self.router.suggest_stops(
+        result = self.router.suggest_stops(
             [42.0, 0.0], [42.1, 0.0], self.transport
         )
-        self.assertEqual(suggestions, [])
+        self.assertEqual(result["stops"], [])
+        self.assertEqual(result["required_stops"], 0)
+
+    def test_long_route_forces_every_mandatory_stop(self):
+        # (40,0)->(48,0) ~ 888 km. Leg = 80 km/h x 5 h = 400 km ->
+        # ceil(888/400) = 3 legs -> 2 mandatory stops. The trip must NOT
+        # end with a single stop. Stops created at the 1/3 and 2/3 marks.
+        self.env["product.template"].create({
+            "name": "Router A", "default_code": "RT-A", "type": "service",
+            "is_published": True, "is_tour_stop": True,
+            "tour_latitude": 40.0 + 8.0 / 3.0, "tour_longitude": 0.001,
+        })
+        self.env["product.template"].create({
+            "name": "Router B", "default_code": "RT-B", "type": "service",
+            "is_published": True, "is_tour_stop": True,
+            "tour_latitude": 40.0 + 16.0 / 3.0, "tour_longitude": 0.001,
+        })
+        result = self.router.suggest_stops(
+            [40.0, 0.0], [48.0, 0.0], self.transport
+        )
+        self.assertEqual(result["required_stops"], 2)
+        self.assertEqual(len(result["stops"]), 2)
+        self.assertEqual([s["code"] for s in result["stops"]],
+                         ["RT-A", "RT-B"])
+        self.assertFalse(result["network_insufficient"])
+        self.assertTrue(all("detour_km" in s for s in result["stops"]))
+
+    def test_mandatory_stop_never_dropped_when_far(self):
+        # corridor at lng=10 (away from MID at 0,0). Single cut at (42,10);
+        # the only nearby published stop sits ~82 km away (> 60 km radius):
+        # it must STILL be returned, flagged far, not skipped.
+        self.env["product.template"].create({
+            "name": "Router Far", "default_code": "RT-FAR", "type": "service",
+            "is_published": True, "is_tour_stop": True,
+            "tour_latitude": 42.0, "tour_longitude": 9.0,
+        })
+        result = self.router.suggest_stops(
+            [40.0, 10.0], [44.0, 10.0], self.transport
+        )
+        codes = [s["code"] for s in result["stops"]]
+        self.assertIn("RT-FAR", codes)
+        far_sug = next(s for s in result["stops"] if s["code"] == "RT-FAR")
+        self.assertTrue(far_sug["far"])
+        self.assertGreater(far_sug["detour_km"], 60.0)
+
+    def test_network_insufficient_is_flagged(self):
+        # (40,10)->(54,10) ~ 1554 km. Leg 400 km -> ceil = 4 legs ->
+        # 3 mandatory stops. Only 2 distinct published stables exist in the
+        # whole DB (RT-MID at lng~0 and this one) -> the route cannot be
+        # fully covered -> network_insufficient must be True.
+        self.env["product.template"].create({
+            "name": "Router Lonely", "default_code": "RT-ONE",
+            "type": "service", "is_published": True, "is_tour_stop": True,
+            "tour_latitude": 47.0, "tour_longitude": 10.0,
+        })
+        result = self.router.suggest_stops(
+            [40.0, 10.0], [54.0, 10.0], self.transport
+        )
+        self.assertEqual(result["required_stops"], 3)
+        self.assertLess(len(result["stops"]), 3)
+        self.assertTrue(result["network_insufficient"])

@@ -55,12 +55,15 @@ class PcTourRouter(models.AbstractModel):
 
     # -- public API ----------------------------------------------------
 
-    def compute_route(self, waypoints, transport=None):
+    def compute_route(self, waypoints, transport=None, downsample=True):
         """Return the driving route across ``waypoints``.
 
         :param list waypoints: ordered list of ``[lat, lng]`` pairs.
         :param transport: optional ``pc.transport.config`` record whose
             average speed drives the duration estimate.
+        :param bool downsample: reduce the geometry for the browser
+            polyline. ``suggest_stops`` calls with ``False`` so the rest
+            points are placed on the full-resolution route.
         :return dict: ``{provider, distance_km, duration_h, geometry}``
             where ``geometry`` is a list of ``[lat, lng]`` points.
         """
@@ -83,7 +86,8 @@ class PcTourRouter(models.AbstractModel):
         if result is None:
             result = self._fallback_route(clean)
 
-        result["geometry"] = _downsample(result["geometry"])
+        if downsample:
+            result["geometry"] = _downsample(result["geometry"])
         result["distance_km"] = round(result["distance_km"], 1)
         result["duration_h"] = round(
             self._duration_h(result["distance_km"], transport), 2
@@ -91,32 +95,53 @@ class PcTourRouter(models.AbstractModel):
         return result
 
     def suggest_stops(self, origin, destination, transport):
-        """Suggest intermediate stables along the origin→destination route.
+        """Suggest the mandatory overnight stables along the route.
 
-        Splits the total distance into legs of ``max_hours_leg *
-        avg_speed_kmh`` km and, at every cut point, picks the nearest
-        published tour stop (never repeating one). Returns the ordered list
-        of ``pc_tour_stop_data()`` dicts.
+        Animal-welfare rule: the horses cannot travel more than
+        ``max_hours_leg`` hours in a row (configurable per vehicle, e.g.
+        6 h), so the route is split into the *minimum* number of legs such
+        that **no leg exceeds that limit**. A long trip therefore yields
+        several mandatory stops, not one. At each rest point the nearest
+        published stable is proposed; a mandatory stop is **never dropped**
+        — if the closest stable is far, it is still returned, flagged as
+        ``far`` with its ``detour_km`` so the team can see it.
+
+        Returns a dict ``{stops, required_stops, network_insufficient}``:
+        ``stops`` is the ordered list of ``pc_tour_stop_data()`` dicts,
+        ``required_stops`` is how many overnight stops the welfare limit
+        demands, and ``network_insufficient`` is True when the network has
+        fewer distinct stables than required (so the consumer can warn that
+        some mandatory stops could not be covered).
         """
+        empty = {"stops": [], "required_stops": 0,
+                 "network_insufficient": False}
         origin = self._point(origin)
         destination = self._point(destination)
         if origin is None or destination is None:
-            return []
-        route = self.compute_route([origin, destination], transport)
+            return empty
+        route = self.compute_route(
+            [origin, destination], transport, downsample=False
+        )
         geometry = route.get("geometry") or [origin, destination]
 
         speed = (transport.avg_speed_kmh if transport else 0) or 75.0
         max_hours = (transport.max_hours_leg if transport else 0) or 6.0
         leg_km = max(1.0, speed * max_hours)
         total_km = route.get("distance_km") or self._geometry_length(geometry)
-        if total_km <= leg_km:
-            return []
 
-        cut_points = self._cut_points(geometry, leg_km)
+        # Minimum legs so that NO leg exceeds the animal travel limit.
+        # 19 h trip with a 6 h limit -> 4 legs -> 3 mandatory stops.
+        n_legs = int(math.ceil(total_km / leg_km - 1e-9))
+        if n_legs <= 1:
+            return empty
+        required = n_legs - 1
+
+        cut_points = self._even_cut_points(geometry, n_legs)
         stops = self.env["product.template"].sudo().search([
             ("is_tour_stop", "=", True),
             ("is_published", "=", True),
             ("tour_latitude", "!=", 0),
+            ("tour_longitude", "!=", 0),
         ])
         suggestions = []
         used = set()
@@ -133,12 +158,26 @@ class PcTourRouter(models.AbstractModel):
                     best_dist = dist
                     best = stop
             if best is None:
-                continue
-            if best_dist is None or best_dist > SUGGEST_MAX_DISTANCE_KM:
-                continue
+                # network exhausted: no more distinct stables to propose
+                break
             used.add(best.id)
-            suggestions.append(best.pc_tour_stop_data())
-        return suggestions
+            data = best.pc_tour_stop_data()
+            data["detour_km"] = round(best_dist, 1)
+            data["far"] = best_dist > SUGGEST_MAX_DISTANCE_KM
+            suggestions.append(data)
+
+        insufficient = len(suggestions) < required
+        if insufficient:
+            _logger.warning(
+                "Tour route needs %s overnight stop(s) but only %s stable(s) "
+                "could be proposed; %s leg(s) exceed the welfare limit.",
+                required, len(suggestions), required - len(suggestions),
+            )
+        return {
+            "stops": suggestions,
+            "required_stops": required,
+            "network_insufficient": insufficient,
+        }
 
     # -- helpers -------------------------------------------------------
 
@@ -173,25 +212,37 @@ class PcTourRouter(models.AbstractModel):
             )
         return total
 
-    def _cut_points(self, geometry, leg_km):
-        """Walk the geometry and return points at every ``leg_km`` of
-        accumulated distance (excluding the final destination)."""
+    def _even_cut_points(self, geometry, n_legs):
+        """Return the ``n_legs - 1`` points that split the geometry into
+        ``n_legs`` legs of equal length, so every leg is <= the animal
+        travel limit and the overnight stops are evenly spaced (no useless
+        short tail leg)."""
+        if n_legs <= 1 or len(geometry) < 2:
+            return []
+        geom_len = self._geometry_length(geometry)
+        if geom_len <= 0:
+            return []
+        targets = [geom_len * k / float(n_legs) for k in range(1, n_legs)]
         cuts = []
-        target = leg_km
+        index = 0
         accumulated = 0.0
         for i in range(1, len(geometry)):
             prev = geometry[i - 1]
             curr = geometry[i]
             seg = haversine_km(prev[0], prev[1], curr[0], curr[1])
-            while accumulated + seg >= target:
+            while index < len(targets) and accumulated + seg >= targets[index]:
                 ratio = 0.0
                 if seg > 0:
-                    ratio = (target - accumulated) / seg
+                    ratio = (targets[index] - accumulated) / seg
                 lat = prev[0] + (curr[0] - prev[0]) * ratio
                 lng = prev[1] + (curr[1] - prev[1]) * ratio
                 cuts.append([lat, lng])
-                target += leg_km
+                index += 1
             accumulated += seg
+        # safety: numerical leftovers map to the last geometry point
+        while index < len(targets):
+            cuts.append(geometry[-1])
+            index += 1
         return cuts
 
     def _param(self, key):
