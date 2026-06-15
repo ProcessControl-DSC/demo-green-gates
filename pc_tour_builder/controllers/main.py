@@ -38,11 +38,27 @@ class TourBuilderController(http.Controller):
                 "price": tmpl.list_price,
                 "pricing": tmpl.tour_extra_pricing or "flat",
             })
+        # Transport options drive the route duration and the suggestion of
+        # intermediate stops, so the visitor can pick the vehicle.
+        transports = []
+        for cfg in request.env["pc.transport.config"].sudo().search(
+            [("active", "=", True)], order="name"
+        ):
+            transports.append({
+                "id": cfg.id,
+                "name": cfg.name,
+                "vehicle_type": cfg.vehicle_type or "",
+                "avg_speed_kmh": cfg.avg_speed_kmh,
+                "max_hours_leg": cfg.max_hours_leg,
+            })
         return request.render(
             "pc_tour_builder.tour_page",
             {
                 "stops_json": Markup(json.dumps(stops, ensure_ascii=False)),
                 "extras_json": Markup(json.dumps(extras, ensure_ascii=False)),
+                "transports_json": Markup(
+                    json.dumps(transports, ensure_ascii=False)
+                ),
             },
         )
 
@@ -74,3 +90,64 @@ class TourBuilderController(http.Controller):
             return request.make_json_response(
                 {"error": str(error)}, status=400
             )
+
+    def _transport(self, transport_config_id):
+        if not transport_config_id:
+            return None
+        try:
+            cfg = request.env["pc.transport.config"].sudo().browse(
+                int(transport_config_id)
+            )
+        except (TypeError, ValueError):
+            return None
+        return cfg if cfg.exists() else None
+
+    @http.route(
+        "/tour/route",
+        type="http",
+        auth="public",
+        methods=["POST"],
+        csrf=False,
+    )
+    def tour_route(self, **kwargs):
+        try:
+            payload = json.loads(request.httprequest.get_data() or b"{}")
+        except ValueError:
+            return request.make_json_response(
+                {"error": "Invalid request"}, status=400
+            )
+        waypoints = payload.get("waypoints") or []
+        transport = self._transport(payload.get("transport_config_id"))
+        result = request.env["pc.tour.router"].sudo().compute_route(
+            waypoints, transport
+        )
+        return request.make_json_response(result)
+
+    @http.route(
+        "/tour/suggest",
+        type="http",
+        auth="public",
+        methods=["POST"],
+        csrf=False,
+    )
+    def tour_suggest(self, **kwargs):
+        try:
+            payload = json.loads(request.httprequest.get_data() or b"{}")
+        except ValueError:
+            return request.make_json_response(
+                {"error": "Invalid request"}, status=400
+            )
+        origin = payload.get("origin")
+        destination = payload.get("destination")
+        transport = self._transport(payload.get("transport_config_id"))
+        router = request.env["pc.tour.router"].sudo()
+        suggestions = router.suggest_stops(origin, destination, transport)
+        # Also return the full route so the client can draw the road
+        # polyline in one round-trip.
+        waypoints = [origin]
+        waypoints += [[s["lat"], s["lng"]] for s in suggestions]
+        waypoints.append(destination)
+        route = router.compute_route(waypoints, transport)
+        return request.make_json_response(
+            {"suggestions": suggestions, "route": route}
+        )

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Process Control (https://www.processcontrol.es)
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html). -->
+<odoo>
+    <record id="res_config_settings_view_form_tour" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.tour.builder</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="20"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Tour Builder"
+                     string="Tour Builder"
+                     name="pc_tour_builder"
+                     groups="sales_team.group_sale_manager">
+                    <block title="Route Engine"
+                           name="pc_tour_route_engine">
+                        <setting title="Choose the routing provider used by the tour builder."
+                                 string="Use Google Maps for route calculation"
+                                 help="By default the free OSRM router is used. Enable this to use the Google Directions API (paid, requires an API key).">
+                            <field name="pc_tour_use_google"/>
+                            <div class="content-group mt16"
+                                 invisible="not pc_tour_use_google">
+                                <div class="row">
+                                    <label for="pc_tour_google_key"
+                                           string="Google Maps API Key"
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="pc_tour_google_key"
+                                           placeholder="AIza..."
+                                           class="col-lg-5"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

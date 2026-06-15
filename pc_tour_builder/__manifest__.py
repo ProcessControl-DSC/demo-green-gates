@@ -17,8 +17,12 @@ Solución desarrollada por Process Control.
     "website": "https://www.processcontrol.es",
     "license": "LGPL-3",
     "category": "Website/Website",
-    "depends": ["website_sale"],
+    "depends": ["website_sale", "sale_renting"],
     "data": [
+        "security/ir.model.access.csv",
+        "data/transport_config_data.xml",
+        "views/transport_config_views.xml",
+        "views/res_config_settings_views.xml",
         "views/product_views.xml",
         "views/tour_templates.xml",
     ],

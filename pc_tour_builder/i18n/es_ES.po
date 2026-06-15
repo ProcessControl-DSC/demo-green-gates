@@ -176,3 +176,123 @@ msgstr "Por noche"
 #. module: pc_tour_builder
 msgid "Per horse and night"
 msgstr "Por caballo y noche"
+
+#. module: pc_tour_builder
+msgid "Origin"
+msgstr "Origen"
+
+#. module: pc_tour_builder
+msgid "Destination"
+msgstr "Destino"
+
+#. module: pc_tour_builder
+msgid "Vehicle"
+msgstr "Vehículo"
+
+#. module: pc_tour_builder
+msgid "Origin city"
+msgstr "Ciudad de origen"
+
+#. module: pc_tour_builder
+msgid "Destination city"
+msgstr "Ciudad de destino"
+
+#. module: pc_tour_builder
+msgid "Calculate route"
+msgstr "Calcular ruta"
+
+#. module: pc_tour_builder
+msgid "Route"
+msgstr "Ruta"
+
+#. module: pc_tour_builder
+msgid "Tour Builder"
+msgstr "Tour Builder"
+
+#. module: pc_tour_builder
+msgid "Transport Configuration"
+msgstr "Configuración de transporte"
+
+#. module: pc_tour_builder
+msgid "Tour Transport Configuration"
+msgstr "Configuración de transporte del tour"
+
+#. module: pc_tour_builder
+msgid "Name"
+msgstr "Nombre"
+
+#. module: pc_tour_builder
+msgid "Vehicle Type"
+msgstr "Tipo de vehículo"
+
+#. module: pc_tour_builder
+msgid "Average Speed (km/h)"
+msgstr "Velocidad media (km/h)"
+
+#. module: pc_tour_builder
+msgid "Average driving speed used to estimate the tour duration."
+msgstr "Velocidad media de conducción usada para estimar la duración del tour."
+
+#. module: pc_tour_builder
+msgid "Max Driving Hours per Leg"
+msgstr "Horas máximas de conducción por tramo"
+
+#. module: pc_tour_builder
+msgid ""
+"Maximum continuous driving hours before a rest stop is needed for the "
+"animals. Used to suggest intermediate stables."
+msgstr ""
+"Horas máximas de conducción continua antes de necesitar una parada de "
+"descanso para los animales. Se usa para sugerir cuadras intermedias."
+
+#. module: pc_tour_builder
+msgid "Rest Hours"
+msgstr "Horas de descanso"
+
+#. module: pc_tour_builder
+msgid "Rest time after each driving leg (informative)."
+msgstr "Tiempo de descanso tras cada tramo de conducción (informativo)."
+
+#. module: pc_tour_builder
+msgid "Active"
+msgstr "Activo"
+
+#. module: pc_tour_builder
+msgid "Company"
+msgstr "Empresa"
+
+#. module: pc_tour_builder
+msgid ""
+"Define the transport vehicles used to estimate tour duration\n"
+"                and to suggest intermediate stops."
+msgstr ""
+"Define los vehículos de transporte usados para estimar la duración del tour "
+"y para sugerir paradas intermedias."
+
+#. module: pc_tour_builder
+msgid "Route Engine"
+msgstr "Motor de rutas"
+
+#. module: pc_tour_builder
+msgid "Use Google Maps for route calculation"
+msgstr "Usar Google Maps para el cálculo de rutas"
+
+#. module: pc_tour_builder
+msgid "Choose the routing provider used by the tour builder."
+msgstr "Elige el proveedor de rutas que usa el configurador de tours."
+
+#. module: pc_tour_builder
+msgid ""
+"By default the free OSRM router is used. Enable this to use the Google "
+"Directions API (paid, requires an API key)."
+msgstr ""
+"Por defecto se usa el router gratuito OSRM. Actívalo para usar la API "
+"Directions de Google (de pago, requiere una clave de API)."
+
+#. module: pc_tour_builder
+msgid "Google Maps API Key"
+msgstr "Clave de API de Google Maps"
+
+#. module: pc_tour_builder
+msgid "API key for the Google Directions API."
+msgstr "Clave de API para la API Directions de Google."
