@@ -16,6 +16,18 @@ class ProductTemplate(models.Model):
         string="Stop Capacity",
         help="Number of stalls available at this stop (informative).",
     )
+    is_tour_extra = fields.Boolean(
+        string="Tour Extra Service",
+        help="Offered as a per-stop optional service on the tour builder.",
+    )
+    tour_extra_pricing = fields.Selection(
+        [("flat", "Per booking"),
+         ("per_night", "Per night"),
+         ("per_horse_night", "Per horse and night")],
+        string="Extra Charged",
+        default="flat",
+        help="How the optional service quantity is computed on the tour.",
+    )
 
     def pc_tour_stop_data(self):
         """Return the JSON-serializable payload used by the /tour landing."""

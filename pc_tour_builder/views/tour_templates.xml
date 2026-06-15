@@ -107,8 +107,11 @@ window.addEventListener('load', function () {
   stops.forEach(function (s) { byId[s.id] = s; });
   var extraBy = {};
   extras.forEach(function (e) { extraBy[e.code] = e; });
-  var HIDDEN = {'SRV-HENO': 1, 'SRV-VIRUTA': 1};
-  var PER_NIGHT = {'SRV-ELEC': 1, 'SRV-AL1': 1, 'SRV-AL2': 1, 'SRV-AL3': 1};
+  function extraQty(e, st) {
+    if (e.pricing === 'per_night') { return st.nights; }
+    if (e.pricing === 'per_horse_night') { return st.horses * st.nights; }
+    return 1;
+  }
   var tour = [];
   function euro(v) { return v.toFixed(2).replace('.', ',') + ' €'; }
   function mk(tag, cls, text) {
@@ -185,9 +188,8 @@ window.addEventListener('load', function () {
   function stopExtras(st) {
     var out = [];
     Object.keys(st.sel).forEach(function (code) {
-      if (st.sel[code]) {
-        var qty = PER_NIGHT[code] ? st.nights : 1;
-        out.push({code: code, qty: qty});
+      if (st.sel[code] && extraBy[code]) {
+        out.push({code: code, qty: extraQty(extraBy[code], st)});
       }
     });
     if (st.hay) { out.push({code: 'SRV-HENO', qty: st.horses * st.nights}); }
@@ -302,7 +304,6 @@ window.addEventListener('load', function () {
       sum.textContent = 'Servicios extra';
       det.appendChild(sum);
       extras.forEach(function (e) {
-        if (HIDDEN[e.code]) { return; }
         var d = mk('div', 'form-check');
         var cb = document.createElement('input');
         cb.type = 'checkbox';

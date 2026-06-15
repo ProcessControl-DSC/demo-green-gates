@@ -12,6 +12,8 @@
                 <field name="tour_latitude" invisible="not is_tour_stop"/>
                 <field name="tour_longitude" invisible="not is_tour_stop"/>
                 <field name="tour_capacity" invisible="not is_tour_stop"/>
+                <field name="is_tour_extra"/>
+                <field name="tour_extra_pricing" invisible="not is_tour_extra"/>
             </group>
         </field>
     </record>

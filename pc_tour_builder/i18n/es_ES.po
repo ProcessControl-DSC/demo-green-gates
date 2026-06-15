@@ -148,3 +148,31 @@ msgstr "Capacidad de la parada"
 #. module: pc_tour_builder
 msgid "Number of stalls available at this stop (informative)."
 msgstr "Número de cuadras disponibles en esta parada (informativo)."
+
+#. module: pc_tour_builder
+msgid "Tour Extra Service"
+msgstr "Servicio extra de tour"
+
+#. module: pc_tour_builder
+msgid "Offered as a per-stop optional service on the tour builder."
+msgstr "Se ofrece como servicio opcional por parada en el configurador de tours."
+
+#. module: pc_tour_builder
+msgid "Extra Charged"
+msgstr "Extra facturado"
+
+#. module: pc_tour_builder
+msgid "How the optional service quantity is computed on the tour."
+msgstr "Cómo se calcula la cantidad del servicio opcional en el tour."
+
+#. module: pc_tour_builder
+msgid "Per booking"
+msgstr "Por reserva"
+
+#. module: pc_tour_builder
+msgid "Per night"
+msgstr "Por noche"
+
+#. module: pc_tour_builder
+msgid "Per horse and night"
+msgstr "Por caballo y noche"

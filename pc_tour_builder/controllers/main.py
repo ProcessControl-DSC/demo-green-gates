@@ -21,26 +21,23 @@ class TourBuilderController(http.Controller):
             ]
         )
         stops = [t.pc_tour_stop_data() for t in templates]
-        extra_codes = (
-            request.env["ir.config_parameter"].sudo().get_param(
-                "pc_tour_builder.extra_codes",
-                "SRV-ELEC,SRV-AL1,SRV-AL2,SRV-AL3,SRV-BOXSP,SRV-VET,"
-                "SRV-HERR,SRV-WALK,SRV-PISTA,SRV-HENO,SRV-VIRUTA",
-            )
-        ).split(",")
-        extras = [
-            {
-                "code": p.default_code,
-                "name": p.name,
-                "price": p.list_price,
-            }
-            for p in request.env["product.product"].sudo().search(
-                [("default_code", "in", [c.strip() for c in extra_codes]),
-                 ("type", "=", "service")]
-            )
-        ]
-        extras.sort(key=lambda e: extra_codes.index(e["code"])
-                    if e["code"] in extra_codes else 99)
+        # Optional services are configured per product with the
+        # "Tour Extra Service" checkbox; each carries its own charge rule.
+        extra_templates = request.env["product.template"].sudo().search(
+            [("is_tour_extra", "=", True), ("sale_ok", "=", True)],
+            order="name",
+        )
+        extras = []
+        for tmpl in extra_templates:
+            variant = tmpl.product_variant_ids[:1]
+            if not variant:
+                continue
+            extras.append({
+                "code": variant.default_code or "",
+                "name": tmpl.name,
+                "price": tmpl.list_price,
+                "pricing": tmpl.tour_extra_pricing or "flat",
+            })
         return request.render(
             "pc_tour_builder.tour_page",
             {
