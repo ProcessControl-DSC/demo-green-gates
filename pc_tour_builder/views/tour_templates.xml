@@ -382,7 +382,9 @@ window.addEventListener('load', function () {
 
   // Photon (OpenStreetMap) geocoder: free, no key, autocomplete-friendly.
   function photonUrl(query, limit) {
-    return 'https://photon.komoot.io/api/?lang=es&amp;limit=' + limit
+    // Photon only supports lang default/de/en/fr; 'default' returns the
+    // local place name (Madrid, Sevilla, París...).
+    return 'https://photon.komoot.io/api/?lang=default&amp;limit=' + limit
            + '&amp;q=' + encodeURIComponent(query);
   }
   function featureLabel(f) {
