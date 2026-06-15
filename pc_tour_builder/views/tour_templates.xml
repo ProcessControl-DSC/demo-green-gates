@@ -188,8 +188,10 @@ window.addEventListener('load', function () {
   function stopExtras(st) {
     var out = [];
     Object.keys(st.sel).forEach(function (code) {
-      if (st.sel[code] && extraBy[code]) {
-        out.push({code: code, qty: extraQty(extraBy[code], st)});
+      if (st.sel[code]) {
+        if (extraBy[code]) {
+          out.push({code: code, qty: extraQty(extraBy[code], st)});
+        }
       }
     });
     if (st.hay) { out.push({code: 'SRV-HENO', qty: st.horses * st.nights}); }
