@@ -138,7 +138,7 @@ class TestTransportConfig(TransactionCase):
         van = self.env.ref(
             "pc_tour_builder.transport_config_small_van"
         )
-        self.assertEqual(truck.avg_speed_kmh, 75.0)
+        self.assertEqual(truck.avg_speed_kmh, 90.0)
         self.assertEqual(truck.max_hours_leg, 6.0)
         self.assertEqual(van.avg_speed_kmh, 90.0)
         self.assertEqual(van.max_hours_leg, 4.5)

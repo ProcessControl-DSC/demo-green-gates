@@ -8,11 +8,11 @@
             <div id="wrap" class="oe_structure">
                 <section class="pt32 pb8">
                     <div class="container">
-                        <h1>Design your tour</h1>
-                        <p class="lead">Pick the stops of your route on the map — one night per
-                        stop, choosing place type and number of horses. Send the whole tour in
-                        one request: our team validates it and you receive a single link to
-                        sign and pay the 50% down payment.</p>
+                        <h1>Diseña tu tour</h1>
+                        <p class="lead">Indica origen y destino, elige el vehículo y el número de
+                        caballos: el sistema calcula la ruta por carretera y propone las cuadras
+                        donde pernoctar. Envía el tour completo en una sola solicitud; nuestro
+                        equipo lo revisa y te confirma la disponibilidad.</p>
                     </div>
                 </section>
                 <section class="pb32">
@@ -22,23 +22,27 @@
                                 <div class="p-3" style="background:#eef4ef;border-radius:10px">
                                     <div class="row g-2 align-items-end">
                                         <div class="col-md-3">
-                                            <label class="form-label small fw-bold mb-1" for="pc_tour_origin">Origin</label>
-                                            <input id="pc_tour_origin" type="text" class="form-control form-control-sm" placeholder="Origin city"/>
+                                            <label class="form-label small fw-bold mb-1" for="pc_tour_origin">Origen</label>
+                                            <input id="pc_tour_origin" type="text" autocomplete="off" class="form-control form-control-sm" placeholder="Ciudad de origen"/>
                                         </div>
                                         <div class="col-md-3">
-                                            <label class="form-label small fw-bold mb-1" for="pc_tour_destination">Destination</label>
-                                            <input id="pc_tour_destination" type="text" class="form-control form-control-sm" placeholder="Destination city"/>
+                                            <label class="form-label small fw-bold mb-1" for="pc_tour_destination">Destino</label>
+                                            <input id="pc_tour_destination" type="text" autocomplete="off" class="form-control form-control-sm" placeholder="Ciudad de destino"/>
                                         </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label small fw-bold mb-1" for="pc_tour_vehicle">Vehicle</label>
+                                        <div class="col-md-2">
+                                            <label class="form-label small fw-bold mb-1" for="pc_tour_horses">Caballos</label>
+                                            <input id="pc_tour_horses" type="number" min="1" max="40" value="1" class="form-control form-control-sm"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small fw-bold mb-1" for="pc_tour_vehicle">Vehículo</label>
                                             <select id="pc_tour_vehicle" class="form-select form-select-sm"/>
                                         </div>
-                                        <div class="col-md-3">
-                                            <button id="pc_tour_calc" class="btn btn-success w-100">Calculate route</button>
+                                        <div class="col-md-2">
+                                            <button id="pc_tour_calc" class="btn btn-success w-100">Calcular ruta</button>
                                         </div>
                                     </div>
                                     <div id="pc_tour_route_info" class="d-none mt-2 p-2" style="background:#fff;border-radius:8px;border:1px solid #cfe0d4">
-                                        <span class="fw-bold">Route</span>
+                                        <span class="fw-bold">Ruta</span>
                                         <span id="pc_tour_route_km" class="ms-2"/>
                                         <span id="pc_tour_route_dur" class="ms-2 text-muted"/>
                                         <span id="pc_tour_route_provider" class="ms-2 small text-muted"/>
@@ -53,38 +57,37 @@
                             </div>
                             <div class="col-lg-4">
                                 <div class="p-3" style="background:#f4f8f5;border-radius:10px;max-height:660px;overflow-y:auto">
-                                    <h4>Your tour</h4>
+                                    <h4>Tu tour</h4>
                                     <div id="pc_tour_stops" class="mb-2"/>
-                                    <div class="d-flex justify-content-between border-top pt-2">
-                                        <span class="fw-bold">Estimated total (excl. taxes)</span>
-                                        <span class="fw-bold" id="pc_tour_total">0,00 €</span>
+                                    <div class="border-top pt-2 small text-muted">
+                                        Precio a confirmar por nuestro equipo según disponibilidad.
                                     </div>
                                     <div id="pc_tour_form">
-                                        <h5 class="mt-3">Your details</h5>
-                                        <input id="pc_tour_name" type="text" class="form-control form-control-sm mb-1" placeholder="Name / Company"/>
-                                        <input id="pc_tour_rider" type="text" class="form-control form-control-sm mb-1" placeholder="Rider / Driver / Groom"/>
-                                        <input id="pc_tour_email" type="email" class="form-control form-control-sm mb-1" placeholder="Email"/>
-                                        <input id="pc_tour_phone" type="text" class="form-control form-control-sm mb-1" placeholder="Mobile"/>
+                                        <h5 class="mt-3">Tus datos</h5>
+                                        <input id="pc_tour_name" type="text" class="form-control form-control-sm mb-1" placeholder="Nombre / Empresa"/>
+                                        <input id="pc_tour_rider" type="text" class="form-control form-control-sm mb-1" placeholder="Jinete / Conductor / Mozo"/>
+                                        <input id="pc_tour_email" type="email" class="form-control form-control-sm mb-1" placeholder="Correo electrónico"/>
+                                        <input id="pc_tour_phone" type="text" class="form-control form-control-sm mb-1" placeholder="Móvil"/>
                                         <select id="pc_tour_stallion" class="form-select form-select-sm mb-1">
-                                            <option value="No">Any stallion? — No</option>
-                                            <option value="Sí">Any stallion? — Yes</option>
+                                            <option value="No">¿Algún semental? — No</option>
+                                            <option value="Sí">¿Algún semental? — Sí</option>
                                         </select>
                                         <select id="pc_tour_payment" class="form-select form-select-sm mb-2">
-                                            <option value="Tarjeta">Payment: Card</option>
-                                            <option value="Efectivo">Payment: Cash</option>
-                                            <option value="Transferencia">Payment: Wire transfer</option>
+                                            <option value="Tarjeta">Pago: tarjeta</option>
+                                            <option value="Efectivo">Pago: efectivo</option>
+                                            <option value="Transferencia">Pago: transferencia</option>
                                         </select>
-                                        <button id="pc_tour_submit" class="btn btn-primary w-100" disabled="disabled">Request this tour</button>
+                                        <button id="pc_tour_submit" class="btn btn-primary w-100" disabled="disabled">Solicitar este tour</button>
                                         <div id="pc_tour_error" class="text-danger small mt-2 d-none"/>
                                     </div>
                                     <div id="pc_tour_done" class="d-none mt-3 p-2" style="background:#e7f6ec;border-radius:8px">
-                                        <div class="fw-bold">Request received!</div>
-                                        <div class="small">Your tour <span id="pc_tour_order" class="fw-bold"/> is now
-                                        with our team. We will review it and send you a single link to sign and
-                                        pay the 50% down payment.</div>
+                                        <div class="fw-bold">¡Solicitud recibida!</div>
+                                        <div class="small">Tu tour <span id="pc_tour_order" class="fw-bold"/> ya está
+                                        con nuestro equipo. Lo revisaremos y te enviaremos un único enlace para
+                                        firmar y pagar la señal del 50 %.</div>
                                     </div>
-                                    <div class="small text-muted mt-3 text-center">Tour Builder · a
-                                    <a href="https://www.processcontrol.es" target="_blank">Process Control</a> solution</div>
+                                    <div class="small text-muted mt-3 text-center">Tour Builder · una solución de
+                                    <a href="https://www.processcontrol.es" target="_blank">Process Control</a></div>
                                 </div>
                             </div>
                         </div>
@@ -128,6 +131,11 @@
   font-weight: 600;
 }
 .pc-tour-row .form-check-label { font-size: 12px; }
+.pc-ac-box { position: absolute; z-index: 1500; left: 0; right: 0; background: #fff;
+  border: 1px solid #cfe0d4; border-radius: 6px; max-height: 220px; overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15); display: none; }
+.pc-ac-item { padding: 6px 10px; cursor: pointer; font-size: 13px; }
+.pc-ac-item:hover { background: #eef4ef; }
                 </style>
                 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"/>
                 <script>
@@ -141,13 +149,12 @@ window.addEventListener('load', function () {
   extras.forEach(function (e) { extraBy[e.code] = e; });
   var originPoint = null;
   var destinationPoint = null;
-  function extraQty(e, st) {
-    if (e.pricing === 'per_night') { return st.nights; }
-    if (e.pricing === 'per_horse_night') { return st.horses * st.nights; }
+  function tourHorses() {
+    var v = parseInt(document.getElementById('pc_tour_horses').value, 10);
+    if (v >= 1) { return v; }
     return 1;
   }
   var tour = [];
-  function euro(v) { return v.toFixed(2).replace('.', ',') + ' €'; }
   function mk(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) { e.className = cls; }
@@ -180,8 +187,7 @@ window.addEventListener('load', function () {
     var sub = s.code;
     if (s.capacity) { sub = sub + ' · ' + s.capacity + ' cuadras'; }
     box.appendChild(mk('div', 'small text-muted', sub));
-    box.appendChild(mk('div', 'small', 'Hierba ' + euro(s.prices.grass) +
-                       ' · Box ' + euro(s.prices.box) + ' / noche'));
+    box.appendChild(mk('div', 'small text-muted', 'Precio según disponibilidad'));
     var btn = mk('button', 'btn btn-primary btn-sm mt-2 w-100', 'Añadir parada');
     btn.addEventListener('click', function () { addStop(s.id); });
     box.appendChild(btn);
@@ -215,8 +221,8 @@ window.addEventListener('load', function () {
   }
   function addStop(tplId) {
     tour.push({tplId: tplId, plaza: 'box', date: defaultDate(tour.length),
-               nights: 1, horses: 2, checkin: 'Tarde', bedding: 'straw',
-               hay: false, sel: {}});
+               nights: 1, horses: tourHorses(), checkin: 'Tarde',
+               bedding: 'straw', hay: false, sel: {}});
     render();
     map.closePopup();
   }
@@ -235,15 +241,10 @@ window.addEventListener('load', function () {
     }
     return out;
   }
-  function stopPrice(st) {
-    var s = byId[st.tplId];
-    var total = st.horses * st.nights *
-                (st.plaza === 'box' ? s.prices.box : s.prices.grass);
-    stopExtras(st).forEach(function (x) {
-      var e = extraBy[x.code];
-      if (e) { total = total + x.qty * e.price; }
-    });
-    return total;
+  function extraQty(e, st) {
+    if (e.pricing === 'per_night') { return st.nights; }
+    if (e.pricing === 'per_horse_night') { return st.horses * st.nights; }
+    return 1;
   }
   function sel(options, value, onChange) {
     var el = document.createElement('select');
@@ -260,7 +261,6 @@ window.addEventListener('load', function () {
   }
   function render() {
     listEl.textContent = '';
-    var total = 0;
     tour.forEach(function (st, i) {
       var s = byId[st.tplId];
       var row = mk('div', 'pc-tour-row');
@@ -351,21 +351,15 @@ window.addEventListener('load', function () {
           st.sel[e.code] = cb.checked;
           render();
         });
-        var lb = mk('label', 'form-check-label',
-                    e.name + ' (' + euro(e.price) + ')');
+        var lb = mk('label', 'form-check-label', e.name);
         lb.htmlFor = cb.id;
         d.appendChild(cb);
         d.appendChild(lb);
         det.appendChild(d);
       });
       row.appendChild(det);
-
-      var price = stopPrice(st);
-      total = total + price;
-      row.appendChild(mk('div', 'text-end small fw-bold mt-1', euro(price)));
       listEl.appendChild(row);
     });
-    document.getElementById('pc_tour_total').textContent = euro(total);
     document.getElementById('pc_tour_submit').disabled = (tour.length === 0);
     renderMap();
   }
@@ -386,34 +380,75 @@ window.addEventListener('load', function () {
     document.getElementById('pc_tour_route_msg').textContent = text || '';
   }
 
+  // Photon (OpenStreetMap) geocoder: free, no key, autocomplete-friendly.
+  function photonUrl(query, limit) {
+    return 'https://photon.komoot.io/api/?lang=es&amp;limit=' + limit
+           + '&amp;q=' + encodeURIComponent(query);
+  }
+  function featureLabel(f) {
+    var p = f.properties || {};
+    var parts = [p.name];
+    if (p.state) { parts.push(p.state); }
+    if (p.country) { parts.push(p.country); }
+    return parts.filter(Boolean).join(', ');
+  }
   function geocode(query) {
-    var url = 'https://nominatim.openstreetmap.org/search?format=json&amp;limit=1&amp;q='
-              + encodeURIComponent(query);
-    return fetch(url, {headers: {'Accept': 'application/json'}})
+    return fetch(photonUrl(query, 1))
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (data.length === 0) { return null; }
-        return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+        var feats = (data || {}).features || [];
+        if (feats.length === 0) { return null; }
+        var c = (feats[0].geometry || {}).coordinates || null;
+        if (c === null) { return null; }
+        return [c[1], c[0]];
       })
       .catch(function () { return null; });
   }
-
-  var geoTimer = null;
-  function debounceGeocode(input, assign) {
+  function setupAutocomplete(input, assign) {
+    input.parentNode.style.position = 'relative';
+    var boxEl = mk('div', 'pc-ac-box');
+    input.parentNode.appendChild(boxEl);
+    var timer = null;
+    function close() { boxEl.style.display = 'none'; boxEl.textContent = ''; }
     input.addEventListener('input', function () {
-      if (geoTimer) { window.clearTimeout(geoTimer); }
-      var query = input.value;
-      geoTimer = window.setTimeout(function () {
-        if (query.length >= 3) {
-          geocode(query).then(function (point) { assign(point); });
-        }
-      }, 700);
+      assign(null);
+      var query = input.value.trim();
+      if (timer) { window.clearTimeout(timer); }
+      if (query.length >= 3) {
+        timer = window.setTimeout(function () {
+          fetch(photonUrl(query, 6)).then(function (r) { return r.json(); })
+            .then(function (data) {
+              boxEl.textContent = '';
+              var feats = (data || {}).features || [];
+              if (feats.length === 0) { close(); return; }
+              feats.forEach(function (f) {
+                var c = (f.geometry || {}).coordinates || null;
+                if (c === null) { return; }
+                var label = featureLabel(f);
+                var item = mk('div', 'pc-ac-item', label);
+                item.addEventListener('mousedown', function (ev) {
+                  ev.preventDefault();
+                  input.value = label;
+                  assign([c[1], c[0]]);
+                  close();
+                });
+                boxEl.appendChild(item);
+              });
+              boxEl.style.display = 'block';
+            }).catch(function () { close(); });
+        }, 300);
+      } else {
+        close();
+      }
+    });
+    input.addEventListener('blur', function () {
+      window.setTimeout(close, 200);
     });
   }
-  debounceGeocode(document.getElementById('pc_tour_origin'),
-                  function (p) { originPoint = p; });
-  debounceGeocode(document.getElementById('pc_tour_destination'),
-                  function (p) { destinationPoint = p; });
+  setupAutocomplete(document.getElementById('pc_tour_origin'),
+                    function (p) { originPoint = p; });
+  setupAutocomplete(document.getElementById('pc_tour_destination'),
+                    function (p) { destinationPoint = p; });
 
   function drawRoad(geometry) {
     roadLayer.clearLayers();
@@ -435,10 +470,10 @@ window.addEventListener('load', function () {
       var hours = Math.floor(route.duration_h);
       var mins = Math.round((route.duration_h - hours) * 60);
       document.getElementById('pc_tour_route_dur').textContent =
-        '≈ ' + hours + ' h ' + mins + ' min driving';
-      var prov = 'OSRM (free)';
+        '≈ ' + hours + ' h ' + mins + ' min de conducción';
+      var prov = 'OSRM (gratis)';
       if (route.provider === 'google') { prov = 'Google Maps'; }
-      if (route.provider === 'fallback') { prov = 'straight line (estimate)'; }
+      if (route.provider === 'fallback') { prov = 'línea recta (estimación)'; }
       document.getElementById('pc_tour_route_provider').textContent =
         '· ' + prov;
       info.classList.remove('d-none');
@@ -468,11 +503,11 @@ window.addEventListener('load', function () {
     setRouteMsg('');
     var btn = document.getElementById('pc_tour_calc');
     btn.disabled = true;
-    btn.textContent = 'Calculating…';
+    btn.textContent = 'Calculando…';
 
     function restore() {
       btn.disabled = false;
-      btn.textContent = 'Calculate route';
+      btn.textContent = 'Calcular ruta';
     }
     function ensure(pointVar, inputId) {
       if (pointVar) { return Promise.resolve(pointVar); }
@@ -487,12 +522,12 @@ window.addEventListener('load', function () {
     }).then(function (destination) {
       destinationPoint = destination;
       if (originPoint === null) {
-        setRouteMsg('Type an origin city so we can locate it.');
+        setRouteMsg('Escribe una ciudad de origen para localizarla.');
         restore();
         return;
       }
       if (destinationPoint === null) {
-        setRouteMsg('Type a destination city so we can locate it.');
+        setRouteMsg('Escribe una ciudad de destino para localizarla.');
         restore();
         return;
       }
@@ -522,18 +557,23 @@ window.addEventListener('load', function () {
         callRoute(waypoints, transportId).then(function (route) {
           drawRoad(route.geometry);
           showRouteInfo(route);
-          if (added === 0) {
-            setRouteMsg('No intermediate stop needed for this route.');
+          if (data.network_insufficient) {
+            var faltan = data.required_stops - suggestions.length;
+            setRouteMsg('Atención: este trayecto necesita ' + data.required_stops
+              + ' parada(s) por descanso, pero faltan ' + faltan
+              + ' por cubrir (no hay cuadra propia en esa zona de la ruta).');
+          } else if (added === 0) {
+            setRouteMsg('Este trayecto no necesita paradas intermedias.');
           } else {
-            setRouteMsg(added + ' intermediate stop(s) added to your tour.');
+            setRouteMsg(added + ' parada(s) obligatoria(s) añadida(s) a tu tour.');
           }
           restore();
         }).catch(function () {
-          setRouteMsg('Could not draw the route, please retry.');
+          setRouteMsg('No se pudo dibujar la ruta, inténtalo de nuevo.');
           restore();
         });
       }).catch(function () {
-        setRouteMsg('Could not calculate the route, please retry.');
+        setRouteMsg('No se pudo calcular la ruta, inténtalo de nuevo.');
         restore();
       });
     });

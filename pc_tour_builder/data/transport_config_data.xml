@@ -5,7 +5,7 @@
     <record id="transport_config_large_truck" model="pc.transport.config">
         <field name="name">Camión grande</field>
         <field name="vehicle_type">Camión</field>
-        <field name="avg_speed_kmh">75</field>
+        <field name="avg_speed_kmh">90</field>
         <field name="max_hours_leg">6</field>
         <field name="rest_hours">1</field>
     </record>
